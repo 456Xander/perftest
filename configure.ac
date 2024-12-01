@@ -246,7 +246,7 @@ AC_ARG_WITH([rocm],
             [AS_CASE([$with_rocm],
                      [yes|no], [],
                      [CPPFLAGS="-I$with_rocm/include $CPPFLAGS"
-                      LDFLAGS="-L$with_rocm/lib64 -Wl,-rpath=$with_rocm/lib64 -L$with_rocm/lib -Wl,-rpath=$with_rocm/lib -lamdhip64 $LDFLAGS"])
+                      LDFLAGS="-L$with_rocm/lib64 -Wl,-rpath=$with_rocm/lib64 -L$with_rocm/lib -Wl,-rpath=$with_rocm/lib -lamdhip64 $LDFLAGS -lhsa-runtime64"])
             ])
 
 AS_IF([test "x$enable_rocm" = xyes], [

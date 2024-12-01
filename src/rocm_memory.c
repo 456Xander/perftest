@@ -8,6 +8,7 @@
 #include <errno.h>
 #include "rocm_memory.h"
 #include <hip/hip_runtime_api.h>
+#include <hsa/hsa_ext_amd.h>
 #if defined HAVE_HIP_HIP_VERSION_H
 #include <hip/hip_version.h>
 #endif
@@ -94,6 +95,15 @@ int rocm_memory_allocate_buffer(struct memory_ctx *ctx, int alignment, uint64_t 
 	printf("allocated %lu bytes of GPU buffer at %p\n", (unsigned long)buf_size, d_A);
 	*addr = d_A;
 	*can_init = true;
+
+    hsa_status_t hsa_error = hsa_amd_portable_export_dmabuf(d_A, size, dmabuf_fd, dmabuf_offset);
+    if (hsa_error != HSA_STATUS_SUCCESS) {
+        printf("hsa_amd_portable_export_dmabuf error=%d\n", hsa_error);
+        return FAILURE;
+    }
+
+	printf("Mapped ROCm allocation to dmabuf %d, offset=%ld\n", *dmabuf_fd, *dmabuf_offset);
+
 	return SUCCESS;
 }
 
