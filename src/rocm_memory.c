@@ -109,6 +109,7 @@ int rocm_memory_allocate_buffer(struct memory_ctx *ctx, int alignment, uint64_t 
 
 int rocm_memory_free_buffer(struct memory_ctx *ctx, int dmabuf_fd, void *addr, uint64_t size) {
 	printf("deallocating GPU buffer %p\n", addr);
+    hsa_amd_portable_close_dmabuf(dmabuf_fd);
 	hipFree(addr);
 	return SUCCESS;
 }

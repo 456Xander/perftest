@@ -56,9 +56,17 @@ AC_PROG_CC
 AC_PROG_CXX
 AM_PROG_AS
 AC_PROG_INSTALL
-AC_PROG_LIBTOOL
+LT_INIT
 AC_PROG_RANLIB
-AC_HEADER_STDC
+m4_warn([obsolete],
+[The preprocessor macro `STDC_HEADERS' is obsolete.
+  Except in unusual embedded environments, you can safely include all
+  ISO C90 headers unconditionally.])dnl
+# Autoupdate added the next two lines to ensure that your configure
+# script's behavior did not change.  They are probably safe to remove.
+AC_CHECK_INCLUDES_DEFAULT
+AC_PROG_EGREP
+
 AC_CHECK_HEADERS([infiniband/verbs.h],,[AC_MSG_ERROR([ibverbs header files not found])])
 AC_CHECK_LIB([ibverbs], [ibv_get_device_list], [], [AC_MSG_ERROR([libibverbs not found])])
 AC_CHECK_LIB([rdmacm], [rdma_create_event_channel], [], AC_MSG_ERROR([librdmacm-devel not found]))
@@ -70,8 +78,7 @@ if test $HAVE_REG_DMABUF_MR = yes; then
 	AC_DEFINE([HAVE_REG_DMABUF_MR], [1], [Enable HAVE_REG_DMABUF_MR])
 fi
 
-AC_TRY_LINK([#include <infiniband/verbs.h>],
-	[struct ibv_flow *t = ibv_create_flow(NULL,NULL);],[HAVE_RAW_ETH_REG=yes], [HAVE_RAW_ETH_REG=no])
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <infiniband/verbs.h>]], [[struct ibv_flow *t = ibv_create_flow(NULL,NULL);]])],[HAVE_RAW_ETH_REG=yes],[HAVE_RAW_ETH_REG=no])
 
 AM_CONDITIONAL([HAVE_RAW_ETH_REG],[test "x$HAVE_RAW_ETH_REG" = "xyes"])
 if test $HAVE_RAW_ETH_REG = yes; then
@@ -86,32 +93,28 @@ else
 fi
 
 
-AC_TRY_LINK([#include <infiniband/verbs.h>],
-	[struct ibv_xrcd *t = ibv_open_xrcd(NULL,NULL);],[HAVE_XRCD=yes], [HAVE_XRCD=no])
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <infiniband/verbs.h>]], [[struct ibv_xrcd *t = ibv_open_xrcd(NULL,NULL);]])],[HAVE_XRCD=yes],[HAVE_XRCD=no])
 
 AM_CONDITIONAL([HAVE_XRCD],[test "x$HAVE_XRCD" = "xyes"])
 if test $HAVE_XRCD = yes; then
 	AC_DEFINE([HAVE_XRCD], [1], [Enable XRCD feature])
 fi
 
-AC_TRY_LINK([
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 #if !defined(__FreeBSD__)
 #include <endian.h>
 #else
 #include <sys/endian.h>
-#endif],
-	[int x = htobe32(0);],[HAVE_ENDIAN=yes], [HAVE_ENDIAN=no])
+#endif]], [[int x = htobe32(0);]])],[HAVE_ENDIAN=yes],[HAVE_ENDIAN=no])
 
 AM_CONDITIONAL([HAVE_ENDIAN],[test "x$HAVE_ENDIAN" = "xyes"])
 if test $HAVE_ENDIAN = yes; then
 	AC_DEFINE([HAVE_ENDIAN], [1], [Enable endian conversion])
 fi
 
-AC_TRY_LINK([],
-	[#if !defined(__FreeBSD__)
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[]], [[#if !defined(__FreeBSD__)
 	 #error nope
-	 #endif],
-	[IS_FREEBSD=yes], [IS_FREEBSD=no])
+	 #endif]])],[IS_FREEBSD=yes],[IS_FREEBSD=no])
 
 AM_CONDITIONAL([IS_FREEBSD],[test "x$IS_FREEBSD" = "xyes"])
 if test $IS_FREEBSD = yes; then
@@ -119,17 +122,15 @@ if test $IS_FREEBSD = yes; then
 	LIBMLX5=-lmlx5
 fi
 
-AC_TRY_LINK([#include <infiniband/verbs.h>],
-        [char *c = IBV_LINK_LAYER_SCIF;],[HAVE_SCIF=yes], [HAVE_SCIF=no])
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <infiniband/verbs.h>]], [[char *c = IBV_LINK_LAYER_SCIF;]])],[HAVE_SCIF=yes],[HAVE_SCIF=no])
 
 AM_CONDITIONAL([HAVE_SCIF],[test "x$HAVE_SCIF" = "xyes"])
 if test $HAVE_SCIF = yes; then
         AC_DEFINE([HAVE_SCIF], [1], [Enable SCIF link Layer])
 fi
 
-AC_TRY_LINK([
-#include <infiniband/verbs.h>],
-        [int x = IBV_QP_INIT_ATTR_SEND_OPS_FLAGS;],[HAVE_IBV_WR_API=yes],[HAVE_IBV_WR_API=no])
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+#include <infiniband/verbs.h>]], [[int x = IBV_QP_INIT_ATTR_SEND_OPS_FLAGS;]])],[HAVE_IBV_WR_API=yes],[HAVE_IBV_WR_API=no])
 AM_CONDITIONAL([HAVE_IBV_WR_API],[test "x$HAVE_IBV_WR_API" = "xyes"])
 # TODO: Add appropriate check. Currently we consider that if rdma-core
 # has new post send, it also has ibv_query_gid_type
@@ -142,69 +143,60 @@ else
 	HAVE_IBV_WR_API=no
 fi
 
-AC_TRY_LINK([
-#include <infiniband/mlx5dv.h>],
-        [int x = MLX5DV_QP_INIT_ATTR_MASK_QP_CREATE_FLAGS;],[HAVE_MLX5DV=yes], [HAVE_MLX5DV=no])
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+#include <infiniband/mlx5dv.h>]], [[int x = MLX5DV_QP_INIT_ATTR_MASK_QP_CREATE_FLAGS;]])],[HAVE_MLX5DV=yes],[HAVE_MLX5DV=no])
 AM_CONDITIONAL([HAVE_MLX5DV],[test "x$HAVE_MLX5DV" = "xyes"])
 
-AC_TRY_LINK([
-#include <infiniband/mlx5dv.h>],
-        [int x = __devx_dw_off(32);],[HAVE_MLX5_DEVX=yes], [HAVE_MLX5_DEVX=no])
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+#include <infiniband/mlx5dv.h>]], [[int x = __devx_dw_off(32);]])],[HAVE_MLX5_DEVX=yes],[HAVE_MLX5_DEVX=no])
 AM_CONDITIONAL([HAVE_MLX5_DEVX],[test "x$HAVE_MLX5_DEVX" = "xyes"])
 if [test $HAVE_MLX5_DEVX = yes] && [test $HAVE_MLX5DV = yes];  then
             AC_DEFINE([HAVE_MLX5_DEVX], [1], [Have MLX5 DEVX support])
 fi
 
-AC_TRY_LINK([
-#include <infiniband/mlx5dv.h>],
-        [int x = MLX5DV_QP_INIT_ATTR_MASK_DCI_STREAMS;],[HAVE_DCS=yes], [HAVE_DCS=no])
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+#include <infiniband/mlx5dv.h>]], [[int x = MLX5DV_QP_INIT_ATTR_MASK_DCI_STREAMS;]])],[HAVE_DCS=yes],[HAVE_DCS=no])
 AM_CONDITIONAL([HAVE_DCS],[test "x$HAVE_DCS" = "xyes"])
 if [test $HAVE_DCS = yes] && [test $HAVE_MLX5DV = yes]; then
         AC_DEFINE([HAVE_DCS], [1], [Have DCS support])
 fi
 
-AC_TRY_LINK([
-#include <infiniband/mlx5dv.h>],
-	[int x = MLX5DV_CONTEXT_MASK_OOO_RECV_WRS;],[HAVE_OOO_RECV_WRS=yes], [HAVE_OOO_RECV_WRS=no])
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+#include <infiniband/mlx5dv.h>]], [[int x = MLX5DV_CONTEXT_MASK_OOO_RECV_WRS;]])],[HAVE_OOO_RECV_WRS=yes],[HAVE_OOO_RECV_WRS=no])
 AM_CONDITIONAL([HAVE_OOO_RECV_WRS],[test "x$HAVE_OOO_RECV_WRS" = "xyes"])
 if [test $HAVE_OOO_RECV_WRS = yes] && [test $HAVE_MLX5DV = yes]; then
 	AC_DEFINE([HAVE_OOO_RECV_WRS], [1], [Have DDP support])
 fi
 
-AC_TRY_LINK([
-#include <infiniband/mlx5dv.h>],
-        [int x = MLX5DV_CRYPTO_STANDARD_AES_XTS;],[HAVE_AES_XTS=yes], [HAVE_AES_XTS=no])
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+#include <infiniband/mlx5dv.h>]], [[int x = MLX5DV_CRYPTO_STANDARD_AES_XTS;]])],[HAVE_AES_XTS=yes],[HAVE_AES_XTS=no])
 AM_CONDITIONAL([HAVE_AES_XTS],[test "x$HAVE_AES_XTS" = "xyes"])
 if [test $HAVE_AES_XTS = yes] && [test $HAVE_MLX5DV = yes];  then
             AC_DEFINE([HAVE_AES_XTS], [1], [Have AES XTS support])
 fi
 
-AC_TRY_LINK([#include <infiniband/verbs.h>],
-        [int c = IBV_GID_TYPE_ROCE_V1;],[HAVE_GID_TYPE_DECLARED=yes], [HAVE_GID_TYPE_DECLARED=no])
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <infiniband/verbs.h>]], [[int c = IBV_GID_TYPE_ROCE_V1;]])],[HAVE_GID_TYPE_DECLARED=yes],[HAVE_GID_TYPE_DECLARED=no])
 AM_CONDITIONAL([HAVE_GID_TYPE_DECLARED],[test "x$HAVE_GID_TYPE_DECLARED" = "xyes"])
 if [test $HAVE_GID_TYPE_DECLARED = yes]; then
         AC_DEFINE([HAVE_GID_TYPE_DECLARED], [1], [API GID compatibility])
 fi
 
-AC_TRY_LINK([
-#include <infiniband/verbs.h>],
-        [int x = IBV_FLOW_SPEC_IPV6;],[HAVE_IPV6=yes], [HAVE_IPV6=no])
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+#include <infiniband/verbs.h>]], [[int x = IBV_FLOW_SPEC_IPV6;]])],[HAVE_IPV6=yes],[HAVE_IPV6=no])
 AM_CONDITIONAL([HAVE_IPV6],[test "x$HAVE_IPV6" = "xyes"])
 if [test $HAVE_IPV6 = yes]; then
         AC_DEFINE([HAVE_IPV6], [1], [Enable IPv6 Flow Specification])
 fi
 
-AC_TRY_LINK([
-#include <infiniband/verbs.h>],
-        [int x = IBV_FLOW_SPEC_IPV4_EXT;],[HAVE_IPV4_EXT=yes], [HAVE_IPV4_EXT=no])
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+#include <infiniband/verbs.h>]], [[int x = IBV_FLOW_SPEC_IPV4_EXT;]])],[HAVE_IPV4_EXT=yes],[HAVE_IPV4_EXT=no])
 AM_CONDITIONAL([HAVE_IPV4_EXT],[test "x$HAVE_IPV4_EXT" = "xyes"])
 if [test $HAVE_IPV4_EXT = yes]; then
         AC_DEFINE([HAVE_IPV4_EXT], [1], [Enable IPv4 Extended Flow Specification])
 fi
 
-AC_TRY_LINK([
-#include <infiniband/verbs.h>],
-        [int x = IBV_FLOW_ATTR_SNIFFER;],[HAVE_SNIFFER=yes], [HAVE_SNIFFER=no])
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+#include <infiniband/verbs.h>]], [[int x = IBV_FLOW_ATTR_SNIFFER;]])],[HAVE_SNIFFER=yes],[HAVE_SNIFFER=no])
 AM_CONDITIONAL([HAVE_SNIFFER],[test "x$HAVE_SNIFFER" = "xyes"])
 if [test $HAVE_SNIFFER = yes]; then
         AC_DEFINE([HAVE_SNIFFER], [1], [Enable Sniffer Flow Specification])
@@ -216,17 +208,15 @@ if [test $IS_FREEBSD = no]; then
 	CPU_IS_RO_COMPLIANT=yes
 fi
 
-AC_TRY_LINK([
-#include <infiniband/verbs.h>],
-        [int x = IBV_ACCESS_RELAXED_ORDERING;],[HAVE_RO=yes], [HAVE_RO=no])
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+#include <infiniband/verbs.h>]], [[int x = IBV_ACCESS_RELAXED_ORDERING;]])],[HAVE_RO=yes],[HAVE_RO=no])
 AM_CONDITIONAL([HAVE_RO],[test "x$HAVE_RO" = "xyes"])
 if [test $HAVE_RO = yes] && [test "x$CPU_IS_RO_COMPLIANT" = "xyes"]; then
         AC_DEFINE([HAVE_RO], [1], [Enable Relaxed Ordering])
 	LIBS=$LIBS" -lpci"
 fi
 
-AC_TRY_LINK([#include <infiniband/verbs.h>],
-	[struct ibv_device_attr_ex *attr_ex; int x = attr_ex->comp_mask;],[HAVE_EX=yes], [HAVE_EX=no])
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <infiniband/verbs.h>]], [[struct ibv_device_attr_ex *attr_ex; int x = attr_ex->comp_mask;]])],[HAVE_EX=yes],[HAVE_EX=no])
 AM_CONDITIONAL([HAVE_EX],[test "x$HAVE_EX" = "xyes"])
 if [test $HAVE_EX = yes]; then
 	AC_DEFINE([HAVE_EX], [1], [Have EX support])
@@ -246,7 +236,7 @@ AC_ARG_WITH([rocm],
             [AS_CASE([$with_rocm],
                      [yes|no], [],
                      [CPPFLAGS="-I$with_rocm/include $CPPFLAGS"
-                      LDFLAGS="-L$with_rocm/lib64 -Wl,-rpath=$with_rocm/lib64 -L$with_rocm/lib -Wl,-rpath=$with_rocm/lib -lamdhip64 $LDFLAGS -lhsa-runtime64"])
+                      LDFLAGS="-L$with_rocm/lib64 -Wl,-rpath=$with_rocm/lib64 -L$with_rocm/lib -Wl,-rpath=$with_rocm/lib -lamdhip64 -lhsa-runtime64 $LDFLAGS "])
             ])
 
 AS_IF([test "x$enable_rocm" = xyes], [
@@ -257,14 +247,15 @@ AS_IF([test "x$enable_rocm" = xyes], [
                         [AC_MSG_ERROR([cannot include hip_version.h])])
        AC_SEARCH_LIBS([hipFree], [amdhip64], [],
                       [AC_MSG_ERROR([cannot link with -lamdhip64])])
+       AC_SEARCH_LIBS([hsa_amd_portable_export_dmabuf], [hsa-runtime64], [],
+                      [AC_MSG_ERROR([cannot link with -lhsa-runtime64])])
        AC_DEFINE([HAVE_ROCM], [1], [Enable ROCm])
        ])
 
 AM_CONDITIONAL([ROCM], [test x$enable_rocm = xyes])
 
-AC_TRY_LINK([
-#include <infiniband/verbs.h>],
-        [int x = IBV_ACCESS_ON_DEMAND;],[HAVE_EX_ODP=yes], [HAVE_EX_ODP=no])
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+#include <infiniband/verbs.h>]], [[int x = IBV_ACCESS_ON_DEMAND;]])],[HAVE_EX_ODP=yes],[HAVE_EX_ODP=no])
 AM_CONDITIONAL([HAVE_EX_ODP],[test "x$HAVE_EX_ODP" = "xyes"])
 if [test $HAVE_EX_ODP = yes] && [test $HAVE_EX = yes]; then
         AC_DEFINE([HAVE_EX_ODP], [1], [Have Extended  ODP support])
@@ -275,10 +266,8 @@ if [test "$CUDA_H_PATH" ]; then
 	AC_DEFINE_UNQUOTED([CUDA_PATH], "$CUDA_H_PATH" , [Enable CUDA feature])
 	LIBS=$LIBS" -lcuda"
 	AC_CHECK_LIB([cuda], [cuMemGetHandleForAddressRange], [HAVE_CUDA_CUMEMGETHANDLEFORADDRESSRANGE=yes], [HAVE_CUDA_CUMEMGETHANDLEFORADDRESSRANGE=no])
-	AC_TRY_LINK([
-	#include <$CUDA_H_PATH>],
-	[int x = CU_MEM_RANGE_HANDLE_TYPE_DMA_BUF_FD|CU_DEVICE_ATTRIBUTE_DMA_BUF_SUPPORTED;],
-	[CUDA_DMA_BUF_PARAMETERS_SUPPORT=yes], [CUDA_DMA_BUF_PARAMETERS_SUPPORT=no])
+	AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+	#include <$CUDA_H_PATH>]], [[int x = CU_MEM_RANGE_HANDLE_TYPE_DMA_BUF_FD|CU_DEVICE_ATTRIBUTE_DMA_BUF_SUPPORTED;]])],[CUDA_DMA_BUF_PARAMETERS_SUPPORT=yes],[CUDA_DMA_BUF_PARAMETERS_SUPPORT=no])
 	if [test "x$HAVE_REG_DMABUF_MR" = "xyes"] && [test "x$HAVE_CUDA_CUMEMGETHANDLEFORADDRESSRANGE" = "xyes"] && [test "x$CUDA_DMA_BUF_PARAMETERS_SUPPORT" = "xyes"]; then
 		AC_DEFINE([HAVE_CUDA_DMABUF], [1], [Enable CUDA DMABUF feature])
 	fi
@@ -375,15 +364,13 @@ AS_IF([test "x$enable_mlu" = xyes], [
 
 AM_CONDITIONAL([MLU], [test x$enable_mlu = xyes])
 
-AC_TRY_LINK([#include <infiniband/verbs.h>],
-	[struct ibv_qp_attr *attr; int x = attr->rate_limit;],[HAVE_PACKET_PACING=yes], [HAVE_PACKET_PACING=no])
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <infiniband/verbs.h>]], [[struct ibv_qp_attr *attr; int x = attr->rate_limit;]])],[HAVE_PACKET_PACING=yes],[HAVE_PACKET_PACING=no])
 AM_CONDITIONAL([HAVE_PACKET_PACING],[test "x$HAVE_PACKET_PACING" = "xyes"])
 if [test $HAVE_PACKET_PACING = yes]; then
 	AC_DEFINE([HAVE_PACKET_PACING], [1], [Have PACKET_PACING support])
 fi
 
-AC_TRY_LINK([#include <infiniband/verbs.h>],
-	[int x = IBV_OOO_RW_DATA_PLACEMENT;], [HAVE_OOO_ATTR=yes], [HAVE_OOO_ATTR=no])
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <infiniband/verbs.h>]], [[int x = IBV_OOO_RW_DATA_PLACEMENT;]])],[HAVE_OOO_ATTR=yes],[HAVE_OOO_ATTR=no])
 AM_CONDITIONAL([HAVE_OOO_ATTR], [test "x$HAVE_OOO_ATTR" = "xyes"])
 if [test $HAVE_OOO_ATTR = yes]; then
 	AC_DEFINE([HAVE_OOO_ATTR], [1], [Have Out of order data placement support])
@@ -391,18 +378,15 @@ fi
 
 if [test $HAVE_IBV_WR_API = yes]; then
 	AC_CHECK_LIB([efa], [efadv_create_qp_ex], [HAVE_SRD=yes], [HAVE_SRD=no])
-	AC_TRY_LINK([#include <infiniband/efadv.h>],
-		    [int x = EFADV_DEVICE_ATTR_CAPS_RDMA_READ;], [HAVE_RDMA_READ_SRD=yes], [HAVE_RDMA_READ_SRD=no])
+	AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <infiniband/efadv.h>]], [[int x = EFADV_DEVICE_ATTR_CAPS_RDMA_READ;]])],[HAVE_RDMA_READ_SRD=yes],[HAVE_RDMA_READ_SRD=no])
 	if [test $HAVE_RDMA_READ_SRD = yes]; then
 		AC_DEFINE([HAVE_SRD_WITH_RDMA_READ], [1], [Have SRD with RDMA read support])
 	fi
-	AC_TRY_LINK([#include <infiniband/efadv.h>],
-		    [int x = EFADV_DEVICE_ATTR_CAPS_RDMA_WRITE;], [HAVE_RDMA_WRITE_SRD=yes], [HAVE_RDMA_WRITE_SRD=no])
+	AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <infiniband/efadv.h>]], [[int x = EFADV_DEVICE_ATTR_CAPS_RDMA_WRITE;]])],[HAVE_RDMA_WRITE_SRD=yes],[HAVE_RDMA_WRITE_SRD=no])
 	if [test $HAVE_RDMA_WRITE_SRD = yes]; then
 		AC_DEFINE([HAVE_SRD_WITH_RDMA_WRITE], [1], [Have SRD with RDMA write support])
 	fi
-	AC_TRY_LINK([#include <infiniband/efadv.h>],
-		    [int x = EFADV_DEVICE_ATTR_CAPS_UNSOLICITED_WRITE_RECV;], [HAVE_UNSOLICITED_WRITE_RECV_SRD=yes], [HAVE_UNSOLICITED_WRITE_RECV_SRD=no])
+	AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <infiniband/efadv.h>]], [[int x = EFADV_DEVICE_ATTR_CAPS_UNSOLICITED_WRITE_RECV;]])],[HAVE_UNSOLICITED_WRITE_RECV_SRD=yes],[HAVE_UNSOLICITED_WRITE_RECV_SRD=no])
 	if [test $HAVE_UNSOLICITED_WRITE_RECV_SRD = yes]; then
 		AC_DEFINE([HAVE_SRD_WITH_UNSOLICITED_WRITE_RECV], [1], [Have SRD with unsolicited RDMA write with imm. support])
 	fi
@@ -429,15 +413,13 @@ if [test $HAVE_HNSDV = yes]; then
 	AC_SUBST([LIBHNS])
 fi
 
-AC_TRY_LINK([#include <infiniband/verbs.h>],
-	[ibv_cq_ex_to_cq], [HAVE_CQ_EX=yes], [HAVE_CQ_EX=no])
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <infiniband/verbs.h>]], [[ibv_cq_ex_to_cq]])],[HAVE_CQ_EX=yes],[HAVE_CQ_EX=no])
 AM_CONDITIONAL([HAVE_CQ_EX], [test "x$HAVE_CQ_EX" = "xyes"])
 if [test $HAVE_CQ_EX = yes]; then
 	AC_DEFINE([HAVE_CQ_EX], [1], [Have CQ EX API support])
 fi
 
-AC_TRY_LINK([#include <infiniband/verbs.h>],
-	[ibv_alloc_td], [HAVE_TD_API=yes], [HAVE_TD_API=no])
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <infiniband/verbs.h>]], [[ibv_alloc_td]])],[HAVE_TD_API=yes],[HAVE_TD_API=no])
 AM_CONDITIONAL([HAVE_TD_API], [test "x$HAVE_TD_API" = "xyes"])
 if [test $HAVE_TD_API = yes]; then
 	AC_DEFINE([HAVE_TD_API], [1], [Have TD API support])
